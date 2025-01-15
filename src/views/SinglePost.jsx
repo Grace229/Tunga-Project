@@ -2,32 +2,32 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Navbar from '../components/Navbar';
 import '../App.css';
-import AllPost from '../components/AllPost';
-import { fetchPostsStart, fetchPostsSuccess, fetchPostsFailure } from '../redux/postSlice';
+import Post from '../components/SinglePost';
+import { fetchPostStart, fetchPostSuccess, fetchPostFailure } from '../redux/postSlice';
 import { toast } from "react-toastify";
+import { useParams } from "react-router-dom";
 import customInstance from '../axios_http_client';
 
-function Home() {
+function SinglePost() {
+const { id } = useParams();
   const dispatch = useDispatch();
-  const posts = useSelector((state) => state.post.posts); // Get posts from Redux store
-  const loading = useSelector((state) => state.post.loading); // Get loading state from Redux store
+  const loading = useSelector((state) => state.post.loading); 
 
   useEffect(() => {
     const fetchData = async () => {
-      if (posts.length === 0) { // Check if posts are empty
-        dispatch(fetchPostsStart());
+        dispatch(fetchPostStart());
         try {
-          const response = await customInstance.get('/post');
-          dispatch(fetchPostsSuccess(response.data)); // Dispatch success action with fetched data
+          const response = await customInstance.get(`/post/${id}`);
+          console.log(response);
+          dispatch(fetchPostSuccess(response.data));
         } catch (err) {
-          toast.error(err.response.data || "An error occurred");    
-          dispatch(fetchPostsFailure('Error fetching posts'));
+          toast.error(err.response?.data?.message || "An error occurred");
+          dispatch(fetchPostFailure(err.message || 'Error fetching post'));
         }
       }
-    };
 
     fetchData();
-  }, [dispatch, posts]);
+  }, [dispatch, id]);
 
   if (loading) {
     return (
@@ -47,9 +47,9 @@ function Home() {
   return (
     <>
       <Navbar />
-      <AllPost posts={posts} />
+      <Post />
     </>
   );
 }
 
-export default Home;
+export default SinglePost;

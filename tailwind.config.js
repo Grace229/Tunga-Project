@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -6,7 +7,18 @@ export default {
   ],
   theme: {
     extend: {},
+    screens: {
+      xs: '480px',    
+      sm: '640px',      
+      md: '768px',      
+      lg: '1024px',     
+      xl: '1280px',     
+      '2xl': '1536px',  
+    },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/aspect-ratio')
+  ],
 }
 

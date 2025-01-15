@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import moment from "moment"
+import { Link } from "react-router-dom";
 
 const AllPost = ({posts}) => {
   return (
@@ -23,12 +24,12 @@ const AllPost = ({posts}) => {
               </h2>
               <div className="mt-6 post-content">{post.content}</div>
               <div className="mt-10">
-                <a
-                  className="text-blue-500 uppercase text-sm tracking-wide font-black content-link"
-                  href={post.url}
+              <Link
+                  to={`/post/${post.id}`}
+                  className="text-blue-500 uppercase text-sm tracking-wide font-black content-link cursor-pointer"
                 >
                   Read More
-                </a>
+                </Link>
               </div>
             </li>
               <hr className="w-full bg-gray-100 my-12" />

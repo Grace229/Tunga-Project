@@ -1,71 +1,143 @@
-/* eslint-disable react/no-unknown-property */
-const SIgnIn = () => {
-  return (
-    <>
-    <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        {/* <img
-          alt="Your Company"
-          src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-          className="mx-auto h-10 w-auto"
-        /> */}
-        <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
-          Sign in to your account
-        </h2>
-      </div>
+import {Formik} from "formik";
+import customInstance from '../axios_http_client';
+import { useNavigate } from 'react-router-dom'; 
+import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useDispatch, useSelector } from 'react-redux';
+import { loginStart, loginSuccess, loginFailure } from '../redux/authSlice';
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form action="#" method="POST" className="space-y-6">
-          <div>
-          <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
-                Email
-              </label>
-          
-            </div>
-            <div className="mt-2">
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                className="block w-full  rounded-md border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
-                Password
-              </label>
-            </div>
-            <div className="mt-2">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                className="block w-full rounded-md border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
-              />
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Sign in
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </>
-  )
+export default function SignIn() {
+    const dispatch = useDispatch();
+    const loading = useSelector((state) => state.auth.loading);
+    const navigate = useNavigate(); 
+     const loginUser = async (values, setSubmitting) => {
+        try {
+        dispatch(loginStart())
+            const response = await customInstance.post('/login', values);
+            dispatch(loginSuccess(response.data));
+            localStorage.setItem('authToken', response.data.token)
+            console.log(response.data);
+            toast.success(response.data.message);     
+                setSubmitting(false);       
+            navigate('/');
+        } catch (error) {
+            let errorMessage;
+if (error.response && error.response.data) {
+    if (error.response.data.non_field_errors && error.response.data.non_field_errors.length > 0) {
+        errorMessage = error.response.data.non_field_errors[0];
+    } else if (error.response.data.email && error.response.data.email.length > 0) {
+        errorMessage = error.response.data.email[0];
+    } else {
+        errorMessage = "An error occurred";
+    }
+} else {
+    errorMessage = "An error occurred"; // Fallback if no error.response or data
 }
+            console.error(error.response.data.non_field_errors[0]);
+            dispatch(loginFailure(errorMessage))
+            toast.error(errorMessage);    
+            setSubmitting(false);
+        }
+    };
+    return (
+        <div className="min-h-screen bg-cover bg-center">
+            <div className="flex flex-col justify-center items-center min-h-screen bg-[#002061] ">
+                <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+                    <h2 className="text-2xl font-semibold text-[#)00] text-center mb-6">Login</h2>
 
-export default SIgnIn
+                    <Formik initialValues={{
+                        email: '',
+                        password: ''
+
+                    }} onSubmit={async(values, {setSubmitting}) => {
+                      loginUser(values, setSubmitting);
+                    }} validate={(values) => {
+                        const errors = {};
+                        if (!values.email) {
+                            errors.email = 'Required';
+                        } else if (
+                            !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
+                        ) {
+                            errors.email = 'Invalid email address';
+                        }
+                        return errors;
+                    }}>
+                        {({
+                              values,
+                              errors,
+                              touched,
+                              handleChange,
+                              handleBlur,
+                              handleSubmit,
+                              isSubmitting
+                          }) => (
+                            <form className="space-y-4" onSubmit={handleSubmit}>
+                                {/* {errors} */}
+
+
+                                {/* Email */}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold">Email</label>
+                                    <input
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter your email"
+                                        type="email"
+                                        name="email"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        value={values.email}
+                                    />
+
+                                    <small className="block text-gray-700 font-semibold">
+                                        {errors.email && touched.email && errors.email}
+                                    </small>
+                                </div>
+
+                                {/* Password */}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold">Password</label>
+                                    <input
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter your password"
+                                        type="password"
+                                        name="password"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        value={values.password}
+                                    />
+
+                                    <small className="block text-gray-700 font-semibold">
+                                        {errors.password && touched.password && errors.password}
+                                    </small>
+                                </div>
+
+                                {/* Submit Button */}
+                                <button
+    disabled={isSubmitting}
+    type="submit"
+    className="w-full bg-[#ed3273] text-white p-3 rounded-lg hover:bg-pink-700 transition flex justify-center items-center"
+  >
+    {loading ? (
+      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
+    ) : (
+      "Submit"
+    )}
+  </button>
+
+                                {/* Login Button */}
+                                <div className="text-center mt-4">
+                                    <button className="text-[#000] hover:text-[#002061]">
+                                        Don&apos;t have an account?  <Link to="/register" className="text-[#002061] hover:text-blue-700 hover:underline">
+            Sign Up
+          </Link>
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+                    </Formik>
+                </div>
+            </div>
+        </div>
+
+    )
+}
