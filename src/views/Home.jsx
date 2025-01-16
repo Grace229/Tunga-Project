@@ -18,7 +18,10 @@ function Home() {
         dispatch(fetchPostsStart());
         try {
           const response = await customInstance.get('/post');
-          dispatch(fetchPostsSuccess(response.data)); // Dispatch success action with fetched data
+          const sortedPosts = response.data.sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          ); 
+          dispatch(fetchPostsSuccess(sortedPosts)); // Dispatch success action with fetched data
         } catch (err) {
           toast.error(err.response.data || "An error occurred");    
           dispatch(fetchPostsFailure('Error fetching posts'));

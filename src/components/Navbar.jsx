@@ -5,10 +5,18 @@ import { toast } from "react-toastify";
 import { logout } from '../redux/authSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import customInstance from '../axios_http_client';
+import Modal from "./Modal";
+import {Formik} from "formik";
+import { createPostStart, createPostSuccess, createPostFailure } from '../redux/postSlice';
+
+
 
 const Navbar = () => {
+  const [isModalOpen, setModalOpen] = useState(false);
   const dispatch = useDispatch();
   const {  isLoggedIn, user} = useSelector((state) => state.auth);
+  const {  loading} = useSelector((state) => state.post);
+
   const [showMenu, setShowMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
     const logOut = async () => {
@@ -16,7 +24,7 @@ const Navbar = () => {
         const response = await customInstance.get('/logout');
         dispatch(logout);
         localStorage.setItem('authToken', response.data.token)
-        console.log(response.data);
+        console.log(response);
         toast.success(response.data.message);  
       
       } catch (err) {
@@ -24,6 +32,22 @@ const Navbar = () => {
         alert('Error fetching data');
       }
     };
+    const addPost = async (values, setSubmitting) => {
+      dispatch(createPostStart())
+      try {  
+          const response = await customInstance.post('/post', values);
+          dispatch(createPostSuccess(response.data));
+          console.log(response);
+          toast.success(response.data.message);     
+              setSubmitting(false);       
+      } catch (error) {
+          console.error(error.response.data.email[0]);
+          dispatch(createPostFailure(error.response.data.email[0] || "An error occurred"))
+          toast.error(error.response.data.email[0] || "An error occurred");    
+          setSubmitting(false);
+
+      }
+  };
 
   return (
     <nav className="bg-[#002061] fixed top-0 w-full shadow-lg z-50">
@@ -70,12 +94,12 @@ const Navbar = () => {
               )}
                 {isLoggedIn && (
             <div className="flex space-x-8">
-            <Link
-                to="/signin"
+            <button
+            onClick={() => setModalOpen(true)}
                 className="bg-[#ed3273] text-white px-4 py-2 rounded-lg hover:bg-[#fff] hover:text-[#ed3273] transition"
               >
                 Add Post
-              </Link>
+              </button>
         </div>
               )}
         </div>
@@ -134,17 +158,114 @@ const Navbar = () => {
               )}
                  {isLoggedIn && (
             <div className="flex flex-col space-y-8 pt-5">
-            <Link
+               <button
+            onClick={() => setModalOpen(true)}
+                className="bg-[#ed3273] text-white px-4 py-2 rounded-lg hover:bg-[#fff] hover:text-[#ed3273] transition"
+              >
+                Add Post
+              </button>
+            {/* <Link
                 to="/signin"
                 className="bg-[#ed3273] text-white text-center px-4 py-2 rounded-lg hover:bg-[#fff] hover:text-[#ed3273] transition"
               >
                Add Post
-              </Link>
+              </Link> */}
         </div>
               )}
       </div>
     </div>
     )}
+     {isModalOpen && (
+        <Modal onClose={() => setModalOpen(false)}>
+          <Formik initialValues={{
+                        title: '',
+                        content: '',
+                    
+                    }} onSubmit={async(values, {setSubmitting}) => {
+                      addPost(values, setSubmitting);
+                    }} validate={(values) => {
+                        const errors = {};
+                        const wordCount = values.content.trim().split(/\s+/).length;
+                        if (!values.content) {
+                          errors.content = "This field is required";
+                        } else if (wordCount < 100) {
+                          errors.content = `The text must be at least 100 words. Currently, it has ${wordCount} words.`;
+                        }
+                        if (!values.title){
+                            errors.title = 'Title is required';
+
+                        }
+                        return errors;
+                    }}>
+                        {({
+                              values,
+                              errors,
+                              touched,
+                              handleChange,
+                              handleBlur,
+                              handleSubmit,
+                              isSubmitting
+                          }) => (
+                            <form className="space-y-4" onSubmit={handleSubmit}>
+
+                                {/* Email */}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold">Title</label>
+                                    <input
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Enter your title"
+                                        type="text"
+                                        name="title"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        value={values.title}
+                                    />
+
+                                    <small className="block text-red-700 font-semibold">
+                                        {errors.title && touched.title && errors.title}
+                                    </small>
+                                </div>
+
+                                {/* Password */}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold">Post</label>
+                                    <textarea
+                                    rows="4" cols="50"
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="What is on your mind"
+                                        name="content"
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        value={values.content}
+                                    />
+
+                                    <small className="block text-red-700 font-semibold">
+                                        {errors.content && touched.content && errors.content}
+                                    </small>
+                                </div>
+
+                                {/* Submit Button */}
+                                <div>
+  <button
+    disabled={isSubmitting}
+    type="submit"
+    className="w-full bg-[#002061] text-white p-3 rounded hover:bg-pink-700 transition flex justify-center items-center"
+  >
+    {loading ? (
+      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
+    ) : (
+      "Add Post"
+    )}
+  </button>
+</div>
+
+                            </form>
+                        )}
+                    </Formik>
+          <div className="flex justify-center content-center">
+          </div>
+        </Modal>
+      )}
   </nav>
   
   )
@@ -152,57 +273,3 @@ const Navbar = () => {
 
 export default Navbar
 
-// import React, { useState } from "react";
-
-// function Navbar() {
-//   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-//   const handleLogout = () => {
-//     setIsLoggedIn(false);
-//     console.log("User logged out");
-//   };
-
-//   return (
-//     <nav className="fixed top-0 w-full bg-gray-800 p-4 shadow-lg z-50">
-//       <div className="container mx-auto flex justify-between items-center">
-//         {/* Logo */}
-//         <div className="text-white text-xl font-bold">MyApp</div>
-
-//         {/* Search Field */}
-//         <div className="flex items-center space-x-4">
-//           <input
-//             type="text"
-//             placeholder="Search..."
-//             className="px-3 py-2 rounded-lg border border-gray-400 focus:outline-none focus:ring focus:ring-blue-500"
-//           />
-//         </div>
-
-//         {/* Buttons */}
-//         <div className="space-x-4">
-//           {!isLoggedIn ? (
-//             <>
-//               <button
-//                 className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-//                 onClick={() => setIsLoggedIn(true)}
-//               >
-//                 Login
-//               </button>
-//               <button className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
-//                 Signup
-//               </button>
-//             </>
-//           ) : (
-//             <button
-//               className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
-//               onClick={handleLogout}
-//             >
-//               Logout
-//             </button>
-//           )}
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// }
-
-// export default Navbar;

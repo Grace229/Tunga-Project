@@ -36,7 +36,7 @@ const postSlice = createSlice({
       },
       fetchPostFailure(state, action) {
         state.loading = false;
-        state.error = action.payload; // Set error message
+        state.error = action.payload;
       }, 
     // Create Post
     createPostStart(state) {
@@ -44,12 +44,15 @@ const postSlice = createSlice({
       state.error = null;
     },
     createPostSuccess(state, action) {
-      state.loading = false;
-      state.posts.push(action.payload); // Add the new post to the array
+        const newPost = action.payload;
+        state.posts = [newPost, ...state.posts].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+        state.loading = false;
     },
     createPostFailure(state, action) {
       state.loading = false;
-      state.error = action.payload; // Set error message
+      state.error = action.payload; 
     },
 
     // Edit Post
@@ -62,12 +65,12 @@ const postSlice = createSlice({
       const { id, updatedPost } = action.payload;
       const index = state.posts.findIndex((post) => post.id === id);
       if (index !== -1) {
-        state.posts[index] = updatedPost; // Update the specific post
+        state.posts[index] = updatedPost; 
       }
     },
     editPostFailure(state, action) {
       state.loading = false;
-      state.error = action.payload; // Set error message
+      state.error = action.payload; 
     },
 
     // Delete Post

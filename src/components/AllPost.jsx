@@ -22,7 +22,7 @@ const AllPost = ({posts}) => {
                   {post.title}
                 </a>
               </h2>
-              <div className="mt-6 post-content">{post.content}</div>
+              <div className="mt-6 post-content line-clamp-8">{post.content}</div>
               <div className="mt-10">
               <Link
                   to={`/post/${post.id}`}

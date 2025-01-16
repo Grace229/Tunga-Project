@@ -47,7 +47,7 @@ const { id } = useParams();
   return (
     <>
       <Navbar />
-      <Post />
+      <Post id={id} />
     </>
   );
 }
